@@ -1,0 +1,74 @@
+# Taken from https://github.com/whitphx/streamlit-server-state/blob/main/.github/workflows/tests.yml
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+        streamlit-version: [null]
+        include:
+          - python-version: 3.9
+            streamlit-version: 1.0.0
+          - python-version: 3.9
+            streamlit-version: 1.7.0
+          - python-version: 3.9
+            streamlit-version: 1.8.0
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+      # Ref: https://github.com/python-poetry/poetry/blob/de0b32c245c72568cf546090600d4626917cd3a4/.github/workflows/main.yml#L46-L60
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+      - name: Set up cache
+        uses: actions/cache@v2.1.7
+        id: cache
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Ensure cache is healthy
+        if: steps.cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: timeout 10s poetry run pip --version || rm -rf .venv
+
+      - name: Install a specific version of Streamlit
+        if: ${{ matrix.streamlit-version }}
+        run: poetry add -D streamlit=="${STREAMLIT_VERSION}"
+        env:
+          STREAMLIT_VERSION: ${{ matrix.streamlit-version }}
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Lint with black, isort, and flake8
+        run: |
+          poetry run black . --check
+          poetry run isort . --check
+          poetry run flake8
+
+      # Mypy checks currently not working on all versions of streamlit
+      # - name: Type checking with mypy
+      #   run: |
+      #     poetry run mypy streamlit_sync
+
+      - name: Test with pytest
+        run: |
+          poetry run pytest streamlit_sync_tests

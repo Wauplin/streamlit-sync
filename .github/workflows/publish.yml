@@ -1,0 +1,32 @@
+# Taken from https://github.com/whitphx/streamlit-server-state/blob/main/.github/workflows/publish.yml
+name: Upload Python Package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2.4.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v2.3.1
+        with:
+          python-version: "3.10"
+
+      - name: Install poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+      - name: Install Python dependencies
+        run: poetry install
+
+      - name: Build and publish
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          poetry publish --build -u __token__ -p ${PYPI_TOKEN}
