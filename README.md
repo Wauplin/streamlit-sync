@@ -2,6 +2,16 @@
 
 A library to easily synchronize dashboards across streamlit sessions.
 
+[![tests](https://github.com/Wauplin/streamlit-sync/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Wauplin/streamlit-sync/actions/workflows/tests.yml?query=branch%3Amain)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+[![PyPI](https://img.shields.io/pypi/v/streamlit-sync)](https://pypi.org/project/streamlit-sync/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/streamlit-sync)](https://pypi.org/project/streamlit-sync/)
+[![PyPI - License](https://img.shields.io/pypi/l/streamlit-sync)](https://pypi.org/project/streamlit-sync/)
+<!-- [![PyPI - Downloads](https://img.shields.io/pypi/dm/streamlit-sync)](https://pypi.org/project/streamlit-sync/) -->
+
+Link to [initial topic](https://discuss.streamlit.io/t/new-library-streamlit-sync-another-way-to-sync-states-across-sessions/23763) on Streamlit forum.
+
 ```py
 import streamlit as st
 
@@ -14,7 +24,7 @@ with streamlit_sync.sync(room_name):
     st.write(y, "squared is", y * y)
 ```
 
-A more complete example app can be found in `./toy_example.py`.
+A more complete example app can be found in [./toy_example.py](./toy_example.py). [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/wauplin/streamlit-sync/main/toy_example.py)
 
 ![](images/demo.gif)
 
@@ -28,11 +38,17 @@ Potential use cases are:
 - It can be a way to "save" locally exact interesting parameters for a presentation. At the moment, it is not possible to store sessions on local drive but it should be a simple improvement to have.
 - etc.
 
+# Install 
+
+```
+pip install streamlit-sync
+```
+
 # Disclaimers
 
 ## Use it at your own risk
 
-- `streamlit-sync` is using internal APIs of Streamlit that are not meant to be public. It is not guaranteed that it will work on future versions.
+- `streamlit-sync` is using internal APIs of Streamlit that are not meant to be public. It is not guaranteed that it will work on future versions. All calls to internal APIs are grouped in [./streamlit_sync/st_hack.py](./streamlit_sync/st_hack.py).
 - `streamlit-sync` is not designed to be particularly efficient. A synced version of your dashboard is an even better incentive to use streamlit caching.
 - Robustness of this library is not guaranteed when used with a lot of concurrent sessions.
 - `streamlit-sync` is not well covered by tests. It would require to have end-to-end tests with several sessions but that's not done.
