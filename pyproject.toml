@@ -10,6 +10,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.7"
 streamlit = "^1.0.0"
+diskcache = "^5.4.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.12b0"
