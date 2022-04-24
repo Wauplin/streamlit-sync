@@ -3,7 +3,8 @@
 The select_room widget is just a simple example of how to use the ./rooms.py API.
 """
 
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Set, Union
 
 import streamlit as st
 
@@ -12,8 +13,9 @@ from .synced_state import get_existing_room_names, get_synced_state
 from .utils import ROOM_NAME_KEY, get_not_synced_key
 
 
-def select_room_widget() -> str:
+def select_room_widget(cache_dir: Optional[Union[str, Path]]) -> str:
     if st.session_state.get(ROOM_NAME_KEY) is not None:
+        # Is already in a room
         room_name = st.session_state[ROOM_NAME_KEY]
         with st.sidebar.expander(
             f'Synced room "{room_name}" ({_get_room_status(room_name)})'
@@ -26,7 +28,7 @@ def select_room_widget() -> str:
         st.sidebar.title("Select a synced room")
 
         room_name = None
-        existing_rooms = get_existing_room_names()
+        existing_rooms = get_existing_room_names() | _list_from_cache_dir(cache_dir)
         options = [None]  # None for "create new room"
         if existing_rooms:
             options += sorted(existing_rooms)
@@ -71,3 +73,15 @@ def _get_room_status(room_name: str) -> str:
         return "1 active session"
     else:
         return f"{nb_sessions} active sessions"
+
+
+def _list_from_cache_dir(cache_dir: Optional[Union[str, Path]]) -> Set[str]:
+    """List existing rooms saved in cache dir."""
+    if cache_dir is None:
+        return set()
+
+    cache_dir = Path(cache_dir)
+    if not cache_dir.exists():
+        return set()
+
+    return {path.name for path in cache_dir.iterdir() if path.is_dir()}

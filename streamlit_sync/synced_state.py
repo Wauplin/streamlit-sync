@@ -1,11 +1,14 @@
 from datetime import datetime
 from itertools import chain
+from pathlib import Path
 from threading import Lock
 from typing import Any, Dict, Set
 
 import streamlit as st
+from diskcache import Cache, Index
 
 from . import st_hack
+from .exceptions import StreamlitSyncException
 from .utils import LAST_SYNCED_KEY, is_synced
 
 
@@ -27,15 +30,23 @@ class _SyncedState:
     def __init__(self, room_name: str) -> None:
         self.room_name: str = room_name
         self._lock: Lock = Lock()
-        self.reset()
+        self.use_cache = False
+
+        with self._lock:
+            self.last_updated: datetime = datetime.fromtimestamp(0)
+            self._registered_sessions: Set[str] = set()
+            self.state: Dict[str, Any] = {}
 
     def __repr__(self) -> str:
-        return (
+        rep = (
             "<SyncedState "
             f"room={self.room_name} "
             f"active_users={self.nb_active_sessions}"
-            ">"
         )
+        if self.use_cache:
+            rep += f" (cached to {self.room_cache_dir})"
+        rep += ">"
+        return rep
 
     @property
     def nb_active_sessions(self) -> int:
@@ -45,18 +56,31 @@ class _SyncedState:
         """
         return len(self._registered_sessions)
 
-    def reset(self) -> None:
-        """Reset the room values."""
-        with self._lock:
-            self.last_updated: datetime = datetime.fromtimestamp(0)
-            self.state: Dict[str, Any] = {}
-            self._registered_sessions: Set[str] = set()
+    def attach_to_disk(self, cache_dir: Path) -> None:
+        """Attach a room to disk for caching."""
+        room_cache_dir = cache_dir / self.room_name
+        if self.use_cache:
+            assert self.room_cache_dir is not None
+            if self.room_cache_dir != room_cache_dir:
+                raise StreamlitSyncException(
+                    f"Cannot attach room {self.room_name}"
+                    f" to cache dir {room_cache_dir}:"
+                    f" already attached to {self.room_cache_dir}"
+                )
+        else:
+            self.use_cache = True
+            self.room_cache_dir: Path = room_cache_dir
+            self._cache = Cache(self.room_cache_dir)
+            self.state = Index.fromcache(self._cache)
 
     def delete(self) -> None:
-        """Reset the room values and discard it from existing room."""
-        self.reset()
-        with self._lock:
-            get_existing_room_names().discard(self.room_name)
+        """Reset the room values and discard it from existing room.
+
+        TODO: remove room from existing room names
+        TODO: remove SyncedState from streamlit singleton
+        TODO: implement delete when cache is used.
+        """
+        raise NotImplementedError()
 
     def register_session(self) -> None:
         """Register a new session to the room."""

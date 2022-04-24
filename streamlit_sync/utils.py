@@ -1,5 +1,4 @@
 """Streamlit-sync specific utils."""
-
 from . import st_hack
 
 

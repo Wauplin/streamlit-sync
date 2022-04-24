@@ -2,15 +2,18 @@ import streamlit as st
 
 import streamlit_sync
 
+# Cache dir is optional. If None is provided, sessions are synced in memory.
+CACHE_DIR = "./.st_sync_cache"
+
 st.sidebar.write(
     "Example app using streamlit-sync library. "
     "For more details, please visit https://github.com/Wauplin/streamlit-sync"
 )
 
+# This step is optional. You can also use a default room name common to all sessions..
+room_name = streamlit_sync.select_room_widget(cache_dir=CACHE_DIR)
 
-room_name = streamlit_sync.select_room_widget()
-
-with streamlit_sync.sync(room_name=room_name):
+with streamlit_sync.sync(room_name=room_name, cache_dir=CACHE_DIR):
     # Sliders
     # Toy example from https://github.com/streamlit/streamlit#a-little-example
     st.header("Sliders")

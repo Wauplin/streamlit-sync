@@ -1,6 +1,6 @@
 # streamlit-sync
 
-A library to easily synchronize dashboards across streamlit sessions.
+A library to easily synchronize sessions between themselves or on local drive for later reuse.
 
 [![tests](https://github.com/Wauplin/streamlit-sync/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Wauplin/streamlit-sync/actions/workflows/tests.yml?query=branch%3Amain)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -17,9 +17,11 @@ import streamlit as st
 
 import streamlit_sync
 
-room_name = streamlit_sync.select_room_widget()
+CACHE_DIR = "./.st_sync_cache"
 
-with streamlit_sync.sync(room_name):
+room_name = streamlit_sync.select_room_widget(CACHE_DIR)
+
+with streamlit_sync.sync(room_name, cache_dir=CACHE_DIR):
     y = st.slider("Select a value")
     st.write(y, "squared is", y * y)
 ```
@@ -33,9 +35,9 @@ A more complete example app can be found in [./toy_example.py](./toy_example.py)
 The initial goal was to be able to share a dashboard on which anyone can interact. Each user sees the effects of other users on their dashboard.
 
 Potential use cases are:
+- It can be a way to "save" locally a streamlit session. Caching is done using [DiskCache library](https://grantjenks.com/docs/diskcache/).
 - In a meeting/presentation, it can be a solution to avoid having 1 user sharing its screen to others and making all the manipulations.
 - Small games or chats can be implemented this way.
-- It can be a way to "save" locally exact interesting parameters for a presentation. At the moment, it is not possible to store sessions on local drive but it should be a simple improvement to have.
 - etc.
 
 # Install 
@@ -55,7 +57,7 @@ pip install streamlit-sync
 
 ## Related work
 
-([streamlit-server-state](https://github.com/whitphx/streamlit-server-state)) is another library doing a similar job. It is used to have server-side state. The idea of `streamlit-sync` is to also sync the widgets themselves.
+([streamlit-server-state](https://github.com/whitphx/streamlit-server-state)) is another library doing a similar job. It is used to have server-side state. The idea of `streamlit-sync` is to sync the widgets as well.
 
 # Features
 
@@ -64,6 +66,23 @@ pip install streamlit-sync
 Each room uses its own lock (from python `threading` lib). Only 1 session per room can read/write the values of the room at a time. I don't know how this would impact the usability if a large amount of sessions are connected to the same room.
 
 Each room keeps in memory the latest snapshot of values with a timestamp. A session can only update a value if it already had the latest data. This means if 2 different sessions make an action on the dashboard at the same time, 1 action will most likely be lost.
+
+## Persistence
+
+Sessions can be persisted on disk. To do so, use the optional `cache_dir` argument. By default, sessions are synced only in memory.
+
+```py
+import streamlit as st
+
+import streamlit_sync
+
+with streamlit_sync.sync("room", cache_dir=".st_sync_cache"):
+    app()
+```
+
+Persistence uses [DiskCache library](https://grantjenks.com/docs/diskcache/), a mature pure-Python library. Any pickle-able data can be persisted.
+
+
 ## How to handle rooms ?
 
 In order to sync data, you need to enter a room. The easiest way of doing it is to use the same room for every session.
@@ -154,6 +173,5 @@ Form data is synced only when the submit button is clicked, which is the intende
 
 - Test the library and especially the UI. At the moment, the sync between 2 sessions is only manually tested.
 - Make an option to sync/not sync values by default. At the moment, all values are synced by default except if explicitly mentioned as "not synced". If would be good to be able to optionally set all values as private except if explicitly synced.
-- Store state on local drive. That is one of the main purpose why I built this tool. The idea would be to be able to store and retrieve streamlit sessions even after a restart. It will most likely work only on pickle-able data.
 - Have a read-write/read-only mechanism with which some "admin" sessions could interacts with the widgets and some "normal users" could just see the current dashboard.
 - Any other ideas are welcome :)
