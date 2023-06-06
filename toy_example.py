@@ -24,7 +24,7 @@ with streamlit_sync.sync(room_name=room_name, cache_dir=CACHE_DIR):
     )
 
     st.subheader("Synced slider")
-    y = st.slider("Select a value")
+    y = st.slider("Select a value 1")
     st.write(y, "squared is", y * y)
 
     st.subheader("Synced slider using custom key widget.")

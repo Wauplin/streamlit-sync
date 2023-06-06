@@ -45,9 +45,8 @@ def select_room_widget(cache_dir: Optional[Union[str, Path]]) -> str:
             enter_room(room_name)
 
         # Else: create new room
-        with st.sidebar.form(
-            key=get_not_synced_key("select_room_form"), clear_on_submit=True
-        ):
+        key = get_not_synced_key("select_room_form")
+        with st.sidebar.form(key=key, clear_on_submit=True):
             new_room_name = st.text_input("New room name")
             submit = st.form_submit_button(label="Create")
 

@@ -12,13 +12,13 @@ from .exceptions import StreamlitSyncException
 from .utils import LAST_SYNCED_KEY, is_synced
 
 
-@st.experimental_singleton
+@st.cache_resource
 def get_existing_room_names() -> Set[str]:
     """Singleton containing all existing room names."""
     return set()
 
 
-@st.experimental_singleton
+@st.cache_resource
 def get_synced_state(room_name: str) -> "_SyncedState":
     """Return the room synced state.
 
@@ -106,7 +106,7 @@ class _SyncedState:
               b. Else, do nothing.
         """
         with self._lock:
-            internal_session_state = st_hack.get_session_state()
+            internal_session_state = st_hack.get_session_state()._state
 
             if st.session_state.get(LAST_SYNCED_KEY) != self.last_updated:
                 # Means current SessionState is not synced with SyncedState
@@ -116,7 +116,6 @@ class _SyncedState:
                 st.experimental_rerun()
                 st.stop()
             else:
-
                 internal_session_state._new_widget_state.widget_metadata
 
                 # Check if new data from streamlit frontend
@@ -166,14 +165,14 @@ class _SyncedState:
             if session_id != current_session_id:
                 # We need to trigger rerun in other sessions.
                 # => We can't use st.experimental_rerun()
-                session = st_hack.Server.get_current().get_session_by_id(session_id)
+                runtime = st_hack.get_runtime_instance()
+                session = runtime._session_mgr.get_session_info(session_id)
                 if session is None:
                     # It is most likely that this session stopped
                     inactive_sessions.add(session_id)
                     continue
-                st_hack.Server.get_current().get_session_by_id(
-                    session_id
-                ).request_rerun(None)
+                else:
+                    session.session.request_rerun(None)
 
         for session_id in inactive_sessions:
             self._registered_sessions.discard(session_id)

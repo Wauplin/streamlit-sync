@@ -5,23 +5,24 @@ It is most likely that this module will break in future updates of Streamlit.
 import re
 from typing import Any, Iterable, Mapping, Optional, Tuple
 
-from streamlit.server.server import Server
-from streamlit.state.session_state import (
-    GENERATED_WIDGET_KEY_PREFIX,
+from streamlit.web.server import Server
+from streamlit.runtime.state.session_state import (
     STREAMLIT_INTERNAL_KEY_PREFIX,
     SessionState,
 )
 
+from streamlit.runtime.state.common import GENERATED_WIDGET_ID_PREFIX
+
 from .exceptions import StreamlitSyncException
 
 try:
-    from streamlit.state.auto_session_state import get_session_state
+    from streamlit.runtime.state import get_session_state
 except ImportError:
     # streamlit < 1.7
     from streamlit.state.session_state import get_session_state
 
 try:
-    from streamlit.scriptrunner import get_script_run_ctx
+    from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
 except ImportError:
     try:
         # streamlit < 1.7
@@ -30,21 +31,22 @@ except ImportError:
         # streamlit < 1.4
         from streamlit.report_thread import get_report_ctx as get_script_run_ctx
 
+from streamlit.runtime import get_instance as get_runtime_instance
 
 try:
-    from streamlit.state.session_state import _is_keyed_widget_id
+    from streamlit.runtime.state.session_state import is_keyed_widget_id
 except ImportError:
-    from streamlit.state.session_state import is_keyed_widget_id as _is_keyed_widget_id
+    from streamlit.state.session_state import is_keyed_widget_id as is_keyed_widget_id
 
 
 _WIDGET_ID_REGEX = re.compile(
-    re.escape(GENERATED_WIDGET_KEY_PREFIX) + r"-[0-9a-f]{32}-(?P<user_key>.*)"
+    re.escape(GENERATED_WIDGET_ID_PREFIX) + r"-[0-9a-f]{32}-(?P<user_key>.*)"
 )
 
 
 def widget_id_to_user_key(widget_id: str) -> str:
     """Return user key if widget is a keyed-widget, else the widget id itself."""
-    if _is_keyed_widget_id(widget_id):
+    if is_keyed_widget_id(widget_id):
         match = _WIDGET_ID_REGEX.match(widget_id)
         if match is None:
             # If broken, look at implementation in
@@ -89,15 +91,11 @@ if not getattr(SessionState, "_is_patched_by_streamlit_sync", False):
     if initial_register_widget is not None:
 
         def _patched_register_widget(
-            self: Any, metadata: Any, widget_id: str, user_key: Optional[str]
+            self: Any, metadata: Any, user_key: Optional[str]
         ) -> Tuple[Any, bool]:
             assert initial_register_widget is not None
-            widget_value, _ = initial_register_widget(
-                self, metadata, widget_id, user_key
-            )
-            return widget_value, _always_set_frontend_value_if_changed(
-                self, widget_id, user_key
-            )
+            widget_value = initial_register_widget(self, metadata, user_key)
+            return widget_value
 
         SessionState.register_widget = _patched_register_widget
 
