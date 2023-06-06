@@ -5,13 +5,12 @@ It is most likely that this module will break in future updates of Streamlit.
 import re
 from typing import Any, Iterable, Mapping, Optional, Tuple
 
-from streamlit.web.server import Server
+from streamlit.runtime.state.common import GENERATED_WIDGET_ID_PREFIX
 from streamlit.runtime.state.session_state import (
     STREAMLIT_INTERNAL_KEY_PREFIX,
     SessionState,
 )
-
-from streamlit.runtime.state.common import GENERATED_WIDGET_ID_PREFIX
+from streamlit.web.server import Server
 
 from .exceptions import StreamlitSyncException
 
