@@ -19,8 +19,8 @@ jobs:
             streamlit-version: 1.0.0
           - python-version: 3.9
             streamlit-version: 1.7.0
-          - python-version: 3.9
-            streamlit-version: 1.23.0
+          - python-version: 3.9.6
+            streamlit-version: 1.23.1
 
     steps:
       - uses: actions/checkout@v2
