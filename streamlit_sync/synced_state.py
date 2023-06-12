@@ -120,29 +120,26 @@ class _SyncedState:
 
                 # Check if new data from streamlit frontend
                 updated_values = {}
-                for key, value in chain(
-                    internal_session_state._new_session_state.items(),
-                    internal_session_state._new_widget_state.items(),
-                    st.session_state.items(),
-                ):
-                    if st_hack.is_form_submitter_value(key):
-                        # Form widgets must not be synced
-                        continue
+                for data_source in [
+                    internal_session_state._new_session_state,
+                    internal_session_state._new_widget_state,
+                    st.session_state,
+                ]:
+                    for key in data_source.keys():
+                        value = data_source[key]
+                        if st_hack.is_form_submitter_value(key):
+                            continue
 
-                    if st_hack.is_trigger_value(key, internal_session_state):
-                        # Trigger values correspond to buttons
-                        # -> we don't want to propagate the effect of the button
-                        #    to avoid performing twice the action
-                        continue
+                        if st_hack.is_trigger_value(key, internal_session_state):
+                            continue
 
-                    if not is_synced(key):
-                        # Some keys are not synced
-                        continue
+                        if not is_synced(key):
+                            continue
 
-                    key = st_hack.widget_id_to_user_key(key)
+                        key = st_hack.widget_id_to_user_key(key)
 
-                    if value != self.state.get(key):
-                        updated_values[key] = value
+                        if value != self.state.get(key):
+                            updated_values[key] = value
 
                 # Current SessionState has newer values than _SyncedState
                 # -> update _SyncedState values
