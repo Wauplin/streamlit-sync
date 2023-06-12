@@ -39,7 +39,7 @@ def test_is_trigger_value() -> None:
 
 def test_widget_id_to_user_key(monkeypatch: MonkeyPatch) -> None:
     """Test `widget_id_to_user_key`."""
-    monkeypatch.setattr(st_hack, "_is_keyed_widget_id", lambda x: x != "not_keyed")
+    monkeypatch.setattr(st_hack, "is_keyed_widget_id", lambda x: x != "not_keyed")
 
     assert widget_id_to_user_key("not_keyed") == "not_keyed"
     assert (

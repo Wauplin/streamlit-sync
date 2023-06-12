@@ -24,7 +24,7 @@ with streamlit_sync.sync(room_name=room_name, cache_dir=CACHE_DIR):
     )
 
     st.subheader("Synced slider")
-    y = st.slider("Select a value")
+    y = st.slider("Select a value 1")
     st.write(y, "squared is", y * y)
 
     st.subheader("Synced slider using custom key widget.")
@@ -51,6 +51,19 @@ with streamlit_sync.sync(room_name=room_name, cache_dir=CACHE_DIR):
         st.session_state["NB_CLICKS"] += 1
 
     st.write("Clicked **" + str(st.session_state["NB_CLICKS"]) + "** times !")
+
+    res = st.file_uploader(
+        "Upload Protein",
+        type="pdb",
+        key=streamlit_sync.get_not_synced_key("upload_test"),
+    )
+
+    key = streamlit_sync.get_not_synced_key("test_button")
+    if st.button("test", key=key):
+        if res:
+            st.write(res.read())
+            st.write(res.id)
+            st.write(res.name)
 
     # Form
     st.header("Form")
